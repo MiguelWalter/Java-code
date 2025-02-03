@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Currency Comparison</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        label {
+            font-size: 18px;
+            margin: 10px;
+            display: block;
+        }
+        input[type="text"] {
+            padding: 8px;
+            margin: 8px 0;
+            width: 200px;
+            font-size: 16px;
+        }
+        input[type="file"] {
+            padding: 8px;
+            margin: 8px 0;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+        .winner {
+            font-weight: bold;
+            color: green;
+        }
+        .loser {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Enter Player IDs</h1>
+    
+    <!-- Player 1 ID -->
+    <label for="player1ID">Player 1 ID:</label>
+    <input type="text" id="player1ID" placeholder="Enter Player 1 ID" />
+    
+    <br><br>
+    
+    <!-- Player 2 ID -->
+    <label for="player2ID">Player 2 ID:</label>
+    <input type="text" id="player2ID" placeholder="Enter Player 2 ID" />
+    
+    <br><br>
+    
+    <!-- File Upload -->
+    <label for="fileInput">Upload Player Data File (CSV):</label>
+    <input type="file" id="fileInput" accept=".txt, .csv" />
+    
+    <br><br>
+    
+    <!-- Compare Button -->
+    <button onclick="compareCurrencies()">Compare</button>
+    
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+    let playerData = [];
+
+    // Function to parse the CSV data
+    function parseCSV(text) {
+        const rows = text.split('\n');
+        const data = [];
+        for (let i = 1; i < rows.length; i++) { // Skipping the header row
+            const columns = rows[i].split(',');
+
+            if (columns.length > 1) {
+                const player = {
+                    id: columns[0].trim(),
+                    currency: parseInt(columns[7].trim()) // Currency is at the 8th column
+                };
+                data.push(player);
+            }
+        }
+        return data;
+    }
+
+    // Listen for file input and read the file
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file && (file.type === 'text/plain' || file.type === 'text/csv')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    playerData = parseCSV(e.target.result);
+                    alert('File successfully uploaded!');
+                } catch (error) {
+                    alert('Error reading the file. Please make sure it is a valid CSV.');
+                }
+            };
+            reader.readAsText(file);
+        } else {
+            alert('Please upload a valid CSV or text file.');
+        }
+    });
+
+    // Compare the currencies of the two players
+    function compareCurrencies() {
+        const player1ID = document.getElementById('player1ID').value.trim();
+        const player2ID = document.getElementById('player2ID').value.trim();
+
+        if (!player1ID || !player2ID) {
+            alert('Please enter both player IDs.');
+            return;
+        }
+
+        // Find the players from the uploaded data
+        const player1 = playerData.find(player => player.id === player1ID);
+        const player2 = playerData.find(player => player.id === player2ID);
+
+        if (!player1) {
+            alert('Player 1 ID not found in the file.');
+            return;
+        }
+        if (!player2) {
+            alert('Player 2 ID not found in the file.');
+            return;
+        }
+
+        const resultElement = document.getElementById('result');
+
+        // Display the comparison and currency amounts
+        resultElement.innerHTML = `
+            <p><strong>${player1.id}</strong> has ${player1.currency} currency.</p>
+            <p><strong>${player2.id}</strong> has ${player2.currency} currency.</p>
+        `;
+
+        // Compare the currencies
+        if (player1.currency > player2.currency) {
+            resultElement.innerHTML += `
+                <p><span class="winner">${player1.id}</span> has more currency!</p>
+                <p><span class="loser">${player2.id}</span> has less currency.</p>
+            `;
+        } else if (player1.currency < player2.currency) {
+            resultElement.innerHTML += `
+                <p><span class="winner">${player2.id}</span> has more currency!</p>
+                <p><span class="loser">${player1.id}</span> has less currency.</p>
+            `;
+        } else {
+            resultElement.innerHTML += `
+                <p>Both players have the same amount of currency!</p>
+            `;
+        }
+    }
+</script>
+
+</body>
+</html>
