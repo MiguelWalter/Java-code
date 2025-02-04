@@ -1,0 +1,105 @@
+import java.util.ArrayList;
+import java.util.List;
+
+class Player {
+    String playerID;
+    String gameID;
+    int inGameCurrency;
+
+    public Player(String playerID, String gameID, int inGameCurrency) {
+        this.playerID = playerID;
+        this.gameID = gameID;
+        this.inGameCurrency = inGameCurrency;
+    }
+
+    public String getPlayerID() {
+        return playerID;
+    }
+
+    public String getGameID() {
+        return gameID;
+    }
+
+    public int getInGameCurrency() {
+        return inGameCurrency;
+    }
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+        // Create a list to store players
+        List<Player> players = new ArrayList<>();
+
+        // Sample data (player ID, game ID, in-game currency)
+        players.add(new Player("P006", "G001", 500));
+        players.add(new Player("P002", "G001", 250));
+        players.add(new Player("P007", "G002", 150));
+        players.add(new Player("P004", "G001", 400));
+        players.add(new Player("P003", "G003", 100));
+        players.add(new Player("P006", "G002", 900));
+        players.add(new Player("P005", "G003", 700));
+        players.add(new Player("P005", "G001", 1200));
+        players.add(new Player("P006", "G004", 300));
+        players.add(new Player("P001", "G002", 800));
+        players.add(new Player("P007", "G003", 500));
+        players.add(new Player("P007", "G004", 200));
+        players.add(new Player("P004", "G001", 600));
+        players.add(new Player("P003", "G002", 100));
+        players.add(new Player("P002", "G001", 200));
+        players.add(new Player("P001", "G003", 750));
+        players.add(new Player("P004", "G001", 1500));
+        players.add(new Player("P006", "G002", 1250));
+        players.add(new Player("P004", "G004", 400));
+        players.add(new Player("P007", "G003", 950));
+        players.add(new Player("P007", "G001", 350));
+        players.add(new Player("P006", "G003", 300));
+        players.add(new Player("P006", "G004", 1200));
+        players.add(new Player("P002", "G001", 1000));
+        players.add(new Player("P001", "G002", 850));
+        players.add(new Player("P003", "G004", 1800));
+        players.add(new Player("P003", "G003", 700));
+        players.add(new Player("P005", "G001", 400));
+        players.add(new Player("P007", "G002", 1100));
+        players.add(new Player("P006", "G004", 600));
+        players.add(new Player("P003", "G002", 200));
+        players.add(new Player("P003", "G003", 700));
+        players.add(new Player("P002", "G004", 1200));
+        players.add(new Player("P004", "G002", 650));
+        players.add(new Player("P004", "G003", 650));
+        players.add(new Player("P002", "G002", 1000));
+
+        // Specify the two players and game IDs to compare
+        String player1ID = "P004"; // Example player ID 1
+        String player1GameID = "G002"; // Game ID for player 1
+        String player2ID = "P004"; // Example player ID 2
+        String player2GameID = "G003"; // Game ID for player 2
+
+        // Call the function to compare their in-game currency
+        comparePlayersGold(players, player1ID, player1GameID, player2ID, player2GameID);
+    }
+
+    public static void comparePlayersGold(List<Player> players, String player1ID, String player1GameID, String player2ID, String player2GameID) {
+        int player1Gold = 0;
+        int player2Gold = 0;
+
+        // Loop through the players list to find the gold of both players
+        for (Player player : players) {
+            if (player.getPlayerID().equals(player1ID) && player.getGameID().equals(player1GameID)) {
+                player1Gold = player.getInGameCurrency();
+            }
+            if (player.getPlayerID().equals(player2ID) && player.getGameID().equals(player2GameID)) {
+                player2Gold = player.getInGameCurrency();
+            }
+        }
+
+        // Compare the gold of both players and print the result
+        if (player1Gold > player2Gold) {
+            System.out.println(player1ID + " from Game " + player1GameID + " has more gold: " + player1Gold);
+        } else if (player2Gold > player1Gold) {
+            System.out.println(player2ID + " from Game " + player2GameID + " has more gold: " + player2Gold);
+        } else {
+            System.out.println("Both players have the same amount of gold.");
+        }
+    }
+}
