@@ -3,6 +3,7 @@ import java.awt.*;
 import java.util.List;
 import java.io.*;
 import java.util.*;
+import javax.swing.table.DefaultTableModel;
 
 public class GameAnalyticsGUI {
 
@@ -10,12 +11,27 @@ public class GameAnalyticsGUI {
     static class Player {
         String playerId;
         String gameId;
+        int level;
+        int timePlayed;
+        int score;
+        int livesRemaining;
+        String characterClass;
         int currency;
+        int itemsCollected;
+        String gameActions;
 
-        Player(String playerId, String gameId, int currency) {
+        Player(String playerId, String gameId, int level, int timePlayed, int score, int livesRemaining,
+               String characterClass, int currency, int itemsCollected, String gameActions) {
             this.playerId = playerId;
             this.gameId = gameId;
+            this.level = level;
+            this.timePlayed = timePlayed;
+            this.score = score;
+            this.livesRemaining = livesRemaining;
+            this.characterClass = characterClass;
             this.currency = currency;
+            this.itemsCollected = itemsCollected;
+            this.gameActions = gameActions;
         }
     }
 
@@ -27,40 +43,107 @@ public class GameAnalyticsGUI {
     private JButton loadButton;
     private JButton compareButton;
     private Map<String, Integer> playerCurrencyMap = new HashMap<>();
+    private JTable playerTable;
+    private DefaultTableModel tableModel;
 
     // Constructor: Sets up the GUI
     public GameAnalyticsGUI() {
         frame = new JFrame("Game Analytics - Player Comparison");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(500, 400);
+        frame.setSize(800, 700);
         frame.setLayout(new BorderLayout());
+
+        // Set background color to a soft blue
+        frame.getContentPane().setBackground(new Color(173, 216, 230));  // Soft blue background
 
         // Create input fields and buttons
         player1IdField = new JTextField();
+        player1IdField.setToolTipText("Enter Player 1 ID");
+        player1IdField.setPreferredSize(new Dimension(200, 30));  // Set a fixed width for the field
+        player1IdField.setBackground(Color.WHITE);  // White background for Player 1 ID field
+        player1IdField.setBorder(BorderFactory.createLineBorder(new Color(0, 123, 255), 2));  // Blue border
+
         player2IdField = new JTextField();
+        player2IdField.setToolTipText("Enter Player 2 ID");
+        player2IdField.setPreferredSize(new Dimension(200, 30));  // Set a fixed width for the field
+        player2IdField.setBackground(Color.WHITE);  // White background for Player 2 ID field
+        player2IdField.setBorder(BorderFactory.createLineBorder(new Color(0, 123, 255), 2));  // Blue border
 
         loadButton = new JButton("Load Player Data");
+        loadButton.setBackground(new Color(0, 123, 255)); // Blue
+        loadButton.setForeground(Color.WHITE);
+        loadButton.setFocusPainted(false);
+        loadButton.setFont(new Font("Arial", Font.BOLD, 14));
+        loadButton.setPreferredSize(new Dimension(200, 40)); // Increased button size
+
         compareButton = new JButton("Compare Players");
+        compareButton.setBackground(new Color(0, 123, 255)); // Blue
+        compareButton.setForeground(Color.WHITE);
+        compareButton.setFocusPainted(false);
+        compareButton.setFont(new Font("Arial", Font.BOLD, 14));
+        compareButton.setPreferredSize(new Dimension(200, 40)); // Increased button size
 
         resultTextArea = new JTextArea();
         resultTextArea.setEditable(false);
         resultTextArea.setLineWrap(true);
         resultTextArea.setWrapStyleWord(true);
-        JScrollPane scrollPane = new JScrollPane(resultTextArea);
+        resultTextArea.setFont(new Font("Arial", Font.PLAIN, 14));
+        resultTextArea.setBackground(new Color(144, 238, 144));  // Light green background for results area
+        resultTextArea.setForeground(new Color(0, 51, 102)); // Dark blue text for contrast
+        JScrollPane resultScrollPane = new JScrollPane(resultTextArea);
+        resultScrollPane.setPreferredSize(new Dimension(250, 150)); // Set preferred size for the result box (smaller width)
+
+        // Table to display Player ID, Game ID, and Currency
+        String[] columnNames = {"Player ID", "Game ID", "Currency"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        playerTable = new JTable(tableModel);
+        playerTable.setBackground(new Color(144, 238, 144)); // Light green background for the table
+        JScrollPane tableScrollPane = new JScrollPane(playerTable);
+        tableScrollPane.setPreferredSize(new Dimension(250, 150)); // Set preferred size for the table (smaller width)
 
         // Layout setup
-        JPanel inputPanel = new JPanel(new GridLayout(3, 2, 10, 10));
-        inputPanel.add(new JLabel("Player 1 ID:"));
-        inputPanel.add(player1IdField);
-        inputPanel.add(new JLabel("Player 2 ID:"));
-        inputPanel.add(player2IdField);
+        JPanel inputPanel = new JPanel(new GridBagLayout());
+        inputPanel.setBackground(new Color(173, 216, 230));  // Soft blue background for the input panel
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10); // Padding for components
+
+        inputPanel.add(new JLabel("Player 1 ID:"), gbc);
+        gbc.gridx = 1;
+        inputPanel.add(player1IdField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        inputPanel.add(new JLabel("Player 2 ID:"), gbc);
+        gbc.gridx = 1;
+        inputPanel.add(player2IdField, gbc);
 
         JPanel bottomPanel = new JPanel();
+        bottomPanel.setBackground(new Color(173, 216, 230));  // Soft blue background for bottom panel
         bottomPanel.add(loadButton);
         bottomPanel.add(compareButton);
 
+        // Center panel to hold result and table
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel.setBackground(new Color(173, 216, 230)); // Soft blue background for center panel
+
+        // Create a panel for the result and table with a border
+        JPanel resultTablePanel = new JPanel();
+        resultTablePanel.setLayout(new BoxLayout(resultTablePanel, BoxLayout.Y_AXIS));
+        resultTablePanel.setBorder(BorderFactory.createTitledBorder("Results and Player Data"));
+        resultTablePanel.setBackground(new Color(173, 216, 230)); // Soft blue background for the result table panel
+        resultTablePanel.add(resultScrollPane);
+        resultTablePanel.add(Box.createRigidArea(new Dimension(0, 10))); // Space between result and table
+        resultTablePanel.add(tableScrollPane);
+
+        centerPanel.add(Box.createVerticalGlue()); // Add space at the top
+        centerPanel.add(resultTablePanel);
+        centerPanel.add(Box.createVerticalGlue()); // Add space at the bottom
+
+        // Add panels and components to the frame
         frame.add(inputPanel, BorderLayout.NORTH);
-        frame.add(scrollPane, BorderLayout.CENTER);
+        frame.add(centerPanel, BorderLayout.CENTER); // Add the center panel
         frame.add(bottomPanel, BorderLayout.SOUTH);
 
         // Action listeners for buttons
@@ -84,6 +167,9 @@ public class GameAnalyticsGUI {
         List<Player> players = readPlayerData(filename);
         playerCurrencyMap = aggregatePlayerCurrencies(players);
 
+        // Update the table with player data
+        updatePlayerTable(players);
+
         JOptionPane.showMessageDialog(frame, "Player data loaded successfully!");
     }
 
@@ -100,17 +186,20 @@ public class GameAnalyticsGUI {
                 if (line.isEmpty()) continue;
 
                 String[] parts = line.split(",");
-                if (parts.length >= 8) {  // Assuming playerId is at index 0 and currency is at index 7
+                if (parts.length >= 10) {  // Adjusted to accommodate all columns
                     String playerId = parts[0].trim();
                     String gameId = parts[1].trim();
-                    String currencyStr = parts[7].trim();
+                    int level = Integer.parseInt(parts[2].trim());
+                    int timePlayed = Integer.parseInt(parts[3].trim());
+                    int score = Integer.parseInt(parts[4].trim());
+                    int livesRemaining = Integer.parseInt(parts[5].trim());
+                    String characterClass = parts[6].trim();
+                    int currency = Integer.parseInt(parts[7].trim());
+                    int itemsCollected = Integer.parseInt(parts[8].trim());
+                    String gameActions = parts[9].trim();
 
-                    try {
-                        int currency = Integer.parseInt(currencyStr);
-                        players.add(new Player(playerId, gameId, currency));
-                    } catch (NumberFormatException e) {
-                        JOptionPane.showMessageDialog(frame, "Error parsing currency for player: " + playerId);
-                    }
+                    players.add(new Player(playerId, gameId, level, timePlayed, score, livesRemaining,
+                            characterClass, currency, itemsCollected, gameActions));
                 } else {
                     JOptionPane.showMessageDialog(frame, "Skipping invalid line: " + line);
                 }
@@ -129,6 +218,17 @@ public class GameAnalyticsGUI {
             playerCurrencyMap.put(player.playerId, playerCurrencyMap.getOrDefault(player.playerId, 0) + player.currency);
         }
         return playerCurrencyMap;
+    }
+
+    // Method to update the table with player data
+    public void updatePlayerTable(List<Player> players) {
+        // Clear the existing data
+        tableModel.setRowCount(0);
+
+        // Add rows to the table for each player
+        for (Player player : players) {
+            tableModel.addRow(new Object[]{player.playerId, player.gameId, player.currency});
+        }
     }
 
     // Method to compare the currencies of two players
