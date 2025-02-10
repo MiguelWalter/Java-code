@@ -72,7 +72,7 @@ public class GameAnalyticsGUI {
 
     // Method to read player data from CSV file
     public void loadPlayerData() {
-        String filename = "GameAnalyticsDataset.csv";  // Path to your CSV file
+        String filename = "C:\\Users\\Miguel\\Documents\\NetBeansProjects\\JavaApplication1\\src\\GameAnalyticsDataset.csv";  // Path to your CSV file
 
         File file = new File(filename);
         if (!file.exists()) {
