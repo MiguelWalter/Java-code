@@ -1,105 +1,162 @@
-import java.util.ArrayList;
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
+import java.io.*;
+import java.util.*;
 
-class Player {
-    String playerID;
-    String gameID;
-    int inGameCurrency;
+public class GameAnalyticsGUI {
 
-    public Player(String playerID, String gameID, int inGameCurrency) {
-        this.playerID = playerID;
-        this.gameID = gameID;
-        this.inGameCurrency = inGameCurrency;
+    // Inner class for storing Player information
+    static class Player {
+        String playerId;
+        String gameId;
+        int currency;
+
+        Player(String playerId, String gameId, int currency) {
+            this.playerId = playerId;
+            this.gameId = gameId;
+            this.currency = currency;
+        }
     }
 
-    public String getPlayerID() {
-        return playerID;
+    // GUI components
+    private JFrame frame;
+    private JTextField player1IdField;
+    private JTextField player2IdField;
+    private JTextArea resultTextArea;
+    private JButton loadButton;
+    private JButton compareButton;
+    private Map<String, Integer> playerCurrencyMap = new HashMap<>();
+
+    // Constructor: Sets up the GUI
+    public GameAnalyticsGUI() {
+        frame = new JFrame("Game Analytics - Player Comparison");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(500, 400);
+        frame.setLayout(new BorderLayout());
+
+        // Create input fields and buttons
+        player1IdField = new JTextField();
+        player2IdField = new JTextField();
+
+        loadButton = new JButton("Load Player Data");
+        compareButton = new JButton("Compare Players");
+
+        resultTextArea = new JTextArea();
+        resultTextArea.setEditable(false);
+        resultTextArea.setLineWrap(true);
+        resultTextArea.setWrapStyleWord(true);
+        JScrollPane scrollPane = new JScrollPane(resultTextArea);
+
+        // Layout setup
+        JPanel inputPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        inputPanel.add(new JLabel("Player 1 ID:"));
+        inputPanel.add(player1IdField);
+        inputPanel.add(new JLabel("Player 2 ID:"));
+        inputPanel.add(player2IdField);
+
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.add(loadButton);
+        bottomPanel.add(compareButton);
+
+        frame.add(inputPanel, BorderLayout.NORTH);
+        frame.add(scrollPane, BorderLayout.CENTER);
+        frame.add(bottomPanel, BorderLayout.SOUTH);
+
+        // Action listeners for buttons
+        loadButton.addActionListener(e -> loadPlayerData());
+        compareButton.addActionListener(e -> comparePlayers());
+
+        frame.setVisible(true);
     }
 
-    public String getGameID() {
-        return gameID;
+    // Method to read player data from CSV file
+    public void loadPlayerData() {
+        String filename = "GameAnalyticsDataset.csv";  // Path to your CSV file
+
+        File file = new File(filename);
+        if (!file.exists()) {
+            JOptionPane.showMessageDialog(frame, "Error: The file " + filename + " does not exist.");
+            return;
+        }
+
+        // Read and process the CSV file
+        List<Player> players = readPlayerData(filename);
+        playerCurrencyMap = aggregatePlayerCurrencies(players);
+
+        JOptionPane.showMessageDialog(frame, "Player data loaded successfully!");
     }
 
-    public int getInGameCurrency() {
-        return inGameCurrency;
-    }
-}
-
-public class Main {
-
-    public static void main(String[] args) {
-        // Create a list to store players
+    // Method to read player data from the CSV file
+    public List<Player> readPlayerData(String filename) {
         List<Player> players = new ArrayList<>();
 
-        // Sample data (player ID, game ID, in-game currency)
-        players.add(new Player("P006", "G001", 500));
-        players.add(new Player("P002", "G001", 250));
-        players.add(new Player("P007", "G002", 150));
-        players.add(new Player("P004", "G001", 400));
-        players.add(new Player("P003", "G003", 100));
-        players.add(new Player("P006", "G002", 900));
-        players.add(new Player("P005", "G003", 700));
-        players.add(new Player("P005", "G001", 1200));
-        players.add(new Player("P006", "G004", 300));
-        players.add(new Player("P001", "G002", 800));
-        players.add(new Player("P007", "G003", 500));
-        players.add(new Player("P007", "G004", 200));
-        players.add(new Player("P004", "G001", 600));
-        players.add(new Player("P003", "G002", 100));
-        players.add(new Player("P002", "G001", 200));
-        players.add(new Player("P001", "G003", 750));
-        players.add(new Player("P004", "G001", 1500));
-        players.add(new Player("P006", "G002", 1250));
-        players.add(new Player("P004", "G004", 400));
-        players.add(new Player("P007", "G003", 950));
-        players.add(new Player("P007", "G001", 350));
-        players.add(new Player("P006", "G003", 300));
-        players.add(new Player("P006", "G004", 1200));
-        players.add(new Player("P002", "G001", 1000));
-        players.add(new Player("P001", "G002", 850));
-        players.add(new Player("P003", "G004", 1800));
-        players.add(new Player("P003", "G003", 700));
-        players.add(new Player("P005", "G001", 400));
-        players.add(new Player("P007", "G002", 1100));
-        players.add(new Player("P006", "G004", 600));
-        players.add(new Player("P003", "G002", 200));
-        players.add(new Player("P003", "G003", 700));
-        players.add(new Player("P002", "G004", 1200));
-        players.add(new Player("P004", "G002", 650));
-        players.add(new Player("P004", "G003", 650));
-        players.add(new Player("P002", "G002", 1000));
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String line;
+            br.readLine();  // Skip header line
 
-        // Specify the two players and game IDs to compare
-        String player1ID = "P004"; // Example player ID 1
-        String player1GameID = "G002"; // Game ID for player 1
-        String player2ID = "P004"; // Example player ID 2
-        String player2GameID = "G003"; // Game ID for player 2
+            while ((line = br.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) continue;
 
-        // Call the function to compare their in-game currency
-        comparePlayersGold(players, player1ID, player1GameID, player2ID, player2GameID);
+                String[] parts = line.split(",");
+                if (parts.length >= 8) {  // Assuming playerId is at index 0 and currency is at index 7
+                    String playerId = parts[0].trim();
+                    String gameId = parts[1].trim();
+                    String currencyStr = parts[7].trim();
+
+                    try {
+                        int currency = Integer.parseInt(currencyStr);
+                        players.add(new Player(playerId, gameId, currency));
+                    } catch (NumberFormatException e) {
+                        JOptionPane.showMessageDialog(frame, "Error parsing currency for player: " + playerId);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Skipping invalid line: " + line);
+                }
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(frame, "Error reading file: " + e.getMessage());
+        }
+
+        return players;
     }
 
-    public static void comparePlayersGold(List<Player> players, String player1ID, String player1GameID, String player2ID, String player2GameID) {
-        int player1Gold = 0;
-        int player2Gold = 0;
-
-        // Loop through the players list to find the gold of both players
+    // Method to aggregate player currencies (sum currencies for the same playerId)
+    public Map<String, Integer> aggregatePlayerCurrencies(List<Player> players) {
+        Map<String, Integer> playerCurrencyMap = new HashMap<>();
         for (Player player : players) {
-            if (player.getPlayerID().equals(player1ID) && player.getGameID().equals(player1GameID)) {
-                player1Gold = player.getInGameCurrency();
-            }
-            if (player.getPlayerID().equals(player2ID) && player.getGameID().equals(player2GameID)) {
-                player2Gold = player.getInGameCurrency();
-            }
+            playerCurrencyMap.put(player.playerId, playerCurrencyMap.getOrDefault(player.playerId, 0) + player.currency);
+        }
+        return playerCurrencyMap;
+    }
+
+    // Method to compare the currencies of two players
+    public void comparePlayers() {
+        String playerId1 = player1IdField.getText().trim();
+        String playerId2 = player2IdField.getText().trim();
+
+        if (!playerCurrencyMap.containsKey(playerId1) || !playerCurrencyMap.containsKey(playerId2)) {
+            JOptionPane.showMessageDialog(frame, "Error: One or both player IDs are invalid or not found.");
+            return;
         }
 
-        // Compare the gold of both players and print the result
-        if (player1Gold > player2Gold) {
-            System.out.println(player1ID + " from Game " + player1GameID + " has more gold: " + player1Gold);
-        } else if (player2Gold > player1Gold) {
-            System.out.println(player2ID + " from Game " + player2GameID + " has more gold: " + player2Gold);
+        int player1Currency = playerCurrencyMap.get(playerId1);
+        int player2Currency = playerCurrencyMap.get(playerId2);
+
+        resultTextArea.setText("Comparing Player " + playerId1 + " and Player " + playerId2 + "\n");
+
+        if (player1Currency > player2Currency) {
+            resultTextArea.append(playerId1 + " has more currency (" + player1Currency + ") than " + playerId2 + " (" + player2Currency + ")");
+        } else if (player1Currency < player2Currency) {
+            resultTextArea.append(playerId2 + " has more currency (" + player2Currency + ") than " + playerId1 + " (" + player1Currency + ")");
         } else {
-            System.out.println("Both players have the same amount of gold.");
+            resultTextArea.append(playerId1 + " and " + playerId2 + " have the same amount of currency: " + player1Currency);
         }
+    }
+
+    // Main method to launch the GUI
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(GameAnalyticsGUI::new);
     }
 }
