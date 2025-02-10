@@ -1,0 +1,121 @@
+import java.io.*;
+import java.util.*;
+
+public class GameAnalyticsCLI {
+
+    // Inner class for storing Player information
+    static class Player {
+        String playerId;
+        String gameId;
+        int currency;
+
+        Player(String playerId, String gameId, int currency) {
+            this.playerId = playerId;
+            this.gameId = gameId;
+            this.currency = currency;
+        }
+    }
+
+    private Map<String, Integer> playerCurrencyMap = new HashMap<>();
+
+    // Method to read player data from CSV file
+    public void loadPlayerData() {
+        String filename = "C:\\Users\\Miguel\\Documents\\NetBeansProjects\\JavaApplication1\\src\\GameAnalyticsDataset.csv";  // Path to your CSV file
+
+        File file = new File(filename);
+        if (!file.exists()) {
+            System.out.println("Error: The file " + filename + " does not exist.");
+            return;
+        }
+
+        // Read and process the CSV file
+        List<Player> players = readPlayerData(filename);
+        playerCurrencyMap = aggregatePlayerCurrencies(players);
+
+        System.out.println("Player data loaded successfully!");
+    }
+
+    // Method to read player data from the CSV file
+    public List<Player> readPlayerData(String filename) {
+        List<Player> players = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String line;
+            br.readLine();  // Skip header line
+
+            while ((line = br.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) continue;
+
+                String[] parts = line.split(",");
+                if (parts.length >= 8) {  // Assuming playerId is at index 0 and currency is at index 7
+                    String playerId = parts[0].trim();
+                    String gameId = parts[1].trim();
+                    String currencyStr = parts[7].trim();
+
+                    try {
+                        int currency = Integer.parseInt(currencyStr);
+                        players.add(new Player(playerId, gameId, currency));
+                    } catch (NumberFormatException e) {
+                        System.out.println("Error parsing currency for player: " + playerId);
+                    }
+                } else {
+                    System.out.println("Skipping invalid line: " + line);
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading file: " + e.getMessage());
+        }
+
+        return players;
+    }
+
+    // Method to aggregate player currencies (sum currencies for the same playerId)
+    public Map<String, Integer> aggregatePlayerCurrencies(List<Player> players) {
+        Map<String, Integer> playerCurrencyMap = new HashMap<>();
+        for (Player player : players) {
+            playerCurrencyMap.put(player.playerId, playerCurrencyMap.getOrDefault(player.playerId, 0) + player.currency);
+        }
+        return playerCurrencyMap;
+    }
+
+    // Method to compare the currencies of two players
+    public void comparePlayers(String playerId1, String playerId2) {
+        if (!playerCurrencyMap.containsKey(playerId1) || !playerCurrencyMap.containsKey(playerId2)) {
+            System.out.println("Error: One or both player IDs are invalid or not found.");
+            return;
+        }
+
+        int player1Currency = playerCurrencyMap.get(playerId1);
+        int player2Currency = playerCurrencyMap.get(playerId2);
+
+        System.out.println("Comparing Player " + playerId1 + " and Player " + playerId2);
+
+        if (player1Currency > player2Currency) {
+            System.out.println(playerId1 + " has more currency (" + player1Currency + ") than " + playerId2 + " (" + player2Currency + ")");
+        } else if (player1Currency < player2Currency) {
+            System.out.println(playerId2 + " has more currency (" + player2Currency + ") than " + playerId1 + " (" + player1Currency + ")");
+        } else {
+            System.out.println(playerId1 + " and " + playerId2 + " have the same amount of currency: " + player1Currency);
+        }
+    }
+
+    // Main method for running the command-line application
+    public static void main(String[] args) {
+        GameAnalyticsCLI gameAnalyticsCLI = new GameAnalyticsCLI();
+
+        // Load player data
+        gameAnalyticsCLI.loadPlayerData();
+
+        // Now compare two players (you can replace these IDs with actual player IDs from your data)
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter Player 1 ID: ");
+        String player1Id = scanner.nextLine().trim();
+
+        System.out.print("Enter Player 2 ID: ");
+        String player2Id = scanner.nextLine().trim();
+
+        gameAnalyticsCLI.comparePlayers(player1Id, player2Id);
+    }
+}
