@@ -1,0 +1,74 @@
+import java.io.*;
+import java.util.*;
+
+public class HeroBattleGame {
+    static class Hero {
+        String name;
+        double winRate;
+
+        Hero(String name, double winRate) {
+            this.name = name;
+            this.winRate = winRate;
+        }
+    }
+
+    public static void main(String[] args) {
+        // Ask user to select CSV file
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter the path to the CSV file: ");
+        String filePath = scanner.nextLine();
+
+        List<Hero> heroes = readCSV(filePath);
+
+        if (heroes.isEmpty()) {
+            System.out.println("No heroes found or failed to read the file.");
+            return;
+        }
+
+        // Display available heroes
+        System.out.println("Available heroes: ");
+        for (int i = 0; i < heroes.size(); i++) {
+            System.out.println((i + 1) + ". " + heroes.get(i).name);
+        }
+
+        // Get hero selections
+        System.out.print("Enter the number of the first hero: ");
+        int hero1Index = scanner.nextInt() - 1;
+        System.out.print("Enter the number of the second hero: ");
+        int hero2Index = scanner.nextInt() - 1;
+
+        // Validate selections
+        if (hero1Index < 0 || hero1Index >= heroes.size() || hero2Index < 0 || hero2Index >= heroes.size()) {
+            System.out.println("Invalid selection!");
+            return;
+        }
+
+        Hero hero1 = heroes.get(hero1Index);
+        Hero hero2 = heroes.get(hero2Index);
+
+        // Output the comparison
+        System.out.println("Win Rate Comparison:");
+        System.out.println(hero1.name + " vs " + hero2.name);
+        System.out.println(hero1.name + " win rate: " + hero1.winRate);
+        System.out.println(hero2.name + " win rate: " + hero2.winRate);
+    }
+
+    // Function to read the CSV file and return a list of heroes with their win rates
+    private static List<Hero> readCSV(String filePath) {
+        List<Hero> heroes = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                if (values.length > 1 && !values[0].equals("hero_name")) {
+                    String name = values[0];
+                    double winRate = Double.parseDouble(values[15]);
+                    heroes.add(new Hero(name, winRate));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return heroes;
+    }
+}
