@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Analytics - Hero Comparison</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ADD8E6; /* Soft blue background */
+            color: #003366; /* Dark blue text */
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .container {
+            width: 80%;
+            max-width: 900px;
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .button {
+            background-color: #007BFF;
+            color: white;
+            font-weight: bold;
+            padding: 12px 20px;
+            margin: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .button-container input {
+            display: none;
+        }
+        .textarea-container {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            background-color: #90EE90;
+            color: #003366;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #90EE90; /* Light green background */
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        td {
+            background-color: #f5f5f5;
+        }
+        .file-upload {
+            display: block;
+            margin-top: 10px;
+            margin-left: auto;
+            margin-right: auto;
+            font-size: 14px;
+            color: #003366;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Hero Comparison - Game Analytics</h1>
+
+<!-- Container to center all content -->
+<div class="container">
+    <!-- Button container for Load and Sort buttons -->
+    <div class="button-container">
+        <button class="button" id="loadButton">Load Hero Data</button>
+        <button class="button" id="sortButton">Sort Heroes by HP</button>
+    </div>
+
+    <!-- Hidden file input element -->
+    <input type="file" id="fileInput" class="file-upload" accept=".csv" />
+
+    <!-- Textarea container for displaying results -->
+    <div class="textarea-container">
+        <textarea id="resultTextArea" readonly></textarea>
+    </div>
+
+    <!-- Table to display hero data -->
+    <table id="heroTable">
+        <thead>
+            <tr>
+                <th>Hero</th>
+                <th>Role</th>
+                <th>Defense</th>
+                <th>HP</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    // Hero class to store hero data
+    class Hero {
+        constructor(heroName, role, defense, hp) {
+            this.heroName = heroName;
+            this.role = role;
+            this.defense = defense;
+            this.hp = hp;
+        }
+    }
+
+    // Function to read CSV file and load hero data
+    function readCSVFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const csvData = event.target.result;
+            const heroes = parseCSVData(csvData);
+            updateHeroTable(heroes);
+            alert('Hero data loaded successfully!');
+        };
+        reader.onerror = function() {
+            alert('Error reading file.');
+        };
+        reader.readAsText(file);
+    }
+
+    // Function to parse CSV data and return an array of Hero objects
+    function parseCSVData(csvData) {
+        const lines = csvData.split('\n');
+        const heroes = [];
+        
+        // Skip the header line
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line === '') continue;
+            
+            const parts = line.split(',');
+            if (parts.length >= 4) {
+                const heroName = parts[0].trim();
+                const role = parts[1].trim();
+                const defense = parseInt(parts[2].trim(), 10);
+                const hp = parseInt(parts[3].trim(), 10);
+                
+                heroes.push(new Hero(heroName, role, defense, hp));
+            }
+        }
+        return heroes;
+    }
+
+    // Function to update the table with hero data
+    function updateHeroTable(heroes) {
+        const tableBody = document.getElementById('heroTable').getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = ''; // Clear existing data
+
+        heroes.forEach(hero => {
+            const row = tableBody.insertRow();
+            row.insertCell(0).textContent = hero.heroName;
+            row.insertCell(1).textContent = hero.role;
+            row.insertCell(2).textContent = hero.defense;
+            row.insertCell(3).textContent = hero.hp;
+        });
+    }
+
+    // Function to sort heroes by HP and display in the textarea
+    function sortHeroesByHP() {
+        const tableBody = document.getElementById('heroTable').getElementsByTagName('tbody')[0];
+        const rows = Array.from(tableBody.rows);
+        
+        rows.sort((rowA, rowB) => {
+            const hpA = parseInt(rowA.cells[3].textContent, 10);
+            const hpB = parseInt(rowB.cells[3].textContent, 10);
+            return hpA - hpB;
+        });
+
+        // Update the table with sorted rows
+        rows.forEach(row => tableBody.appendChild(row));
+
+        // Update the results textarea
+        const resultTextArea = document.getElementById('resultTextArea');
+        resultTextArea.value = 'Heroes sorted by HP (lowest to highest):\n';
+        rows.forEach(row => {
+            const heroName = row.cells[0].textContent;
+            const role = row.cells[1].textContent;
+            const defense = row.cells[2].textContent;
+            const hp = row.cells[3].textContent;
+            resultTextArea.value += `${heroName} - Role: ${role}, HP: ${hp}, Defense: ${defense}\n`;
+        });
+    }
+
+    // Event listener for Load Hero Data button
+    document.getElementById('loadButton').addEventListener('click', () => {
+        document.getElementById('fileInput').click();
+    });
+
+    // Event listener for file input to handle file selection
+    document.getElementById('fileInput').addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            readCSVFile(file);
+        }
+    });
+
+    // Event listener for Sort Heroes button
+    document.getElementById('sortButton').addEventListener('click', sortHeroesByHP);
+</script>
+
+</body>
+</html>
