@@ -1,0 +1,247 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.util.List;
+import java.util.ArrayList;
+
+public class HeroBattleGameGUI {
+
+    static class Hero {
+        String name;
+        double winRate;
+        double defenseOverall;
+        double offenseOverall;
+        double skillEffectOverall;
+        double movementSpd;
+        double magicDefense;
+        double mana;
+        double physicalAtk;
+        double physicalDefense;
+        double hp;
+        double attackSpeed;
+        double manaRegen;
+
+        Hero(String name, double defenseOverall, double offenseOverall, double skillEffectOverall,
+             double movementSpd, double magicDefense, double mana, double physicalAtk,
+             double physicalDefense, double hp, double attackSpeed, double manaRegen) {
+            this.name = name;
+            this.defenseOverall = defenseOverall;
+            this.offenseOverall = offenseOverall;
+            this.skillEffectOverall = skillEffectOverall;
+            this.movementSpd = movementSpd;
+            this.magicDefense = magicDefense;
+            this.mana = mana;
+            this.physicalAtk = physicalAtk;
+            this.physicalDefense = physicalDefense;
+            this.hp = hp;
+            this.attackSpeed = attackSpeed;
+            this.manaRegen = manaRegen;
+            this.winRate = calculateWinRate();
+        }
+
+        private double calculateWinRate() {
+            return (defenseOverall * 0.2) + (offenseOverall * 0.2) + (skillEffectOverall * 0.1) +
+                    (movementSpd * 0.1) + (magicDefense * 0.1) + (mana * 0.05) +
+                    (physicalAtk * 0.1) + (physicalDefense * 0.05) + (hp * 0.05) +
+                    (attackSpeed * 0.05) + (manaRegen * 0.05);
+        }
+
+        public static void normalizeWinRates(Hero hero1, Hero hero2) {
+            double totalWinRate = hero1.winRate + hero2.winRate;
+            if (totalWinRate == 0) {
+                hero1.winRate = 50.0;
+                hero2.winRate = 50.0;
+            } else {
+                hero1.winRate = (hero1.winRate / totalWinRate) * 100;
+                hero2.winRate = (hero2.winRate / totalWinRate) * 100;
+            }
+            hero1.winRate = Math.round(hero1.winRate * 100.0) / 100.0;
+            hero2.winRate = Math.round(hero2.winRate * 100.0) / 100.0;
+        }
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Hero Battle Game");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(600, 600);
+
+        // GUI Components
+        JFileChooser fileChooser = new JFileChooser();
+        JLabel filePathLabel = new JLabel("No file selected");
+        JButton loadFileButton = new JButton("Load CSV File");
+        JButton battleButton = new JButton("Start Battle");
+        JComboBox<String> hero1ComboBox = new JComboBox<>();
+        JComboBox<String> hero2ComboBox = new JComboBox<>();
+        JLabel resultLabel = new JLabel("Select heroes and click Start Battle.");
+
+        // Set button colors and font size
+        loadFileButton.setBackground(new Color(0, 123, 255)); // Blue background
+        loadFileButton.setForeground(Color.WHITE); // White text
+        loadFileButton.setFocusPainted(false);
+        loadFileButton.setFont(new Font("Arial", Font.PLAIN, 18));
+
+        battleButton.setBackground(new Color(40, 167, 69)); // Green background
+        battleButton.setForeground(Color.WHITE); // White text
+        battleButton.setFocusPainted(false);
+        battleButton.setFont(new Font("Arial", Font.PLAIN, 18));
+
+        // Set result label color and font size
+        resultLabel.setForeground(Color.DARK_GRAY);
+        resultLabel.setFont(new Font("Arial", Font.PLAIN, 20));
+
+        // Action listeners
+        loadFileButton.addActionListener(e -> loadHeroes(fileChooser, filePathLabel, hero1ComboBox, hero2ComboBox));
+        battleButton.addActionListener(e -> startBattle(fileChooser, hero1ComboBox, hero2ComboBox, resultLabel));
+
+        // Layout setup
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(Color.GRAY); // Set the background color to gray for the entire panel
+
+        // File selection in a panel
+        JPanel filePanel = new JPanel();
+        filePanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        filePanel.setBackground(Color.GRAY); // Gray background for file panel
+        filePanel.add(loadFileButton);
+        filePanel.add(filePathLabel);
+        panel.add(filePanel);
+
+        // Hero selection and start battle button in a smaller box-like panel
+        JPanel heroSelectionPanel = new JPanel();
+        heroSelectionPanel.setLayout(new BoxLayout(heroSelectionPanel, BoxLayout.Y_AXIS));
+        // Sky blue border with thicker line (thickness = 4)
+        heroSelectionPanel.setBorder(BorderFactory.createLineBorder(new Color(135, 206, 235), 4)); 
+        heroSelectionPanel.setBackground(Color.GRAY); // Gray background for hero selection
+        heroSelectionPanel.setPreferredSize(new Dimension(500, 300)); // Larger box for hero selection
+        heroSelectionPanel.setMaximumSize(new Dimension(500, 300));
+
+        // Hero selection panels
+        JPanel hero1Panel = createHeroSelectionPanel("Select Hero 1:", hero1ComboBox);
+        JPanel hero2Panel = createHeroSelectionPanel("Select Hero 2:", hero2ComboBox);
+        heroSelectionPanel.add(hero1Panel);
+        heroSelectionPanel.add(hero2Panel);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(Color.GRAY); // Gray background for button panel
+        buttonPanel.add(battleButton);
+        heroSelectionPanel.add(buttonPanel);
+        panel.add(heroSelectionPanel);
+
+        // Result display in a smaller box-like panel
+        JPanel resultPanel = new JPanel();
+        resultPanel.setLayout(new BorderLayout());
+        // Sky blue border with thicker line (thickness = 4)
+        resultPanel.setBorder(BorderFactory.createLineBorder(new Color(135, 206, 235), 4)); // Thicker box line
+        resultPanel.setBackground(Color.GRAY); // Gray background for result panel
+        resultPanel.setPreferredSize(new Dimension(500, 150)); // Larger result box
+        resultPanel.setMaximumSize(new Dimension(500, 150));
+        resultPanel.add(resultLabel, BorderLayout.CENTER);
+        panel.add(resultPanel);
+
+        frame.add(panel);
+        frame.setVisible(true);
+    }
+
+    private static JPanel createHeroSelectionPanel(String label, JComboBox<String> comboBox) {
+        JPanel heroPanel = new JPanel();
+        heroPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        heroPanel.setBackground(Color.GRAY); // Gray background for hero selection panel
+        heroPanel.add(new JLabel(label));
+        heroPanel.add(comboBox);
+        comboBox.setFont(new Font("Arial", Font.PLAIN, 16)); // Increase font size for combo box
+        comboBox.setPreferredSize(new Dimension(200, 30)); // Make combo boxes larger
+        return heroPanel;
+    }
+
+    private static void loadHeroes(JFileChooser fileChooser, JLabel filePathLabel, JComboBox<String> hero1ComboBox, JComboBox<String> hero2ComboBox) {
+        int result = fileChooser.showOpenDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+            filePathLabel.setText(filePath);
+
+            List<Hero> heroes = readCSV(filePath);
+            if (!heroes.isEmpty()) {
+                hero1ComboBox.removeAllItems();
+                hero2ComboBox.removeAllItems();
+
+                for (Hero hero : heroes) {
+                    hero1ComboBox.addItem(hero.name);
+                    hero2ComboBox.addItem(hero.name);
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "No heroes found or failed to read the file.");
+            }
+        }
+    }
+
+    private static void startBattle(JFileChooser fileChooser, JComboBox<String> hero1ComboBox, JComboBox<String> hero2ComboBox, JLabel resultLabel) {
+        String hero1Name = (String) hero1ComboBox.getSelectedItem();
+        String hero2Name = (String) hero2ComboBox.getSelectedItem();
+
+        if (hero1Name == null || hero2Name == null || hero1Name.equals(hero2Name)) {
+            JOptionPane.showMessageDialog(null, "Please select two different heroes.");
+            return;
+        }
+
+        String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+        List<Hero> heroes = readCSV(filePath);
+        Hero hero1 = null, hero2 = null;
+
+        for (Hero hero : heroes) {
+            if (hero.name.equals(hero1Name)) hero1 = hero;
+            else if (hero.name.equals(hero2Name)) hero2 = hero;
+        }
+
+        if (hero1 != null && hero2 != null) {
+            Hero.normalizeWinRates(hero1, hero2);
+            resultLabel.setText(String.format("<html>%s win rate: %.2f%%<br>%s win rate: %.2f%%<br>%s</html>",
+                    hero1.name, hero1.winRate, hero2.name, hero2.winRate,
+                    hero1.winRate > hero2.winRate ? hero1.name + " wins!" :
+                            hero1.winRate < hero2.winRate ? hero2.name + " wins!" : "It's a tie!"));
+        }
+    }
+
+    private static List<Hero> readCSV(String filePath) {
+        List<Hero> heroes = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                if (values.length > 1 && !values[0].equals("hero_name")) {
+                    try {
+                        String name = values[0];
+                        double defenseOverall = parseDouble(values[1]);
+                        double offenseOverall = parseDouble(values[2]);
+                        double skillEffectOverall = parseDouble(values[3]);
+                        double movementSpd = parseDouble(values[4]);
+                        double magicDefense = parseDouble(values[5]);
+                        double mana = parseDouble(values[6]);
+                        double physicalAtk = parseDouble(values[7]);
+                        double physicalDefense = parseDouble(values[8]);
+                        double hp = parseDouble(values[9]);
+                        double attackSpeed = parseDouble(values[10]);
+                        double manaRegen = parseDouble(values[11]);
+
+                        heroes.add(new Hero(name, defenseOverall, offenseOverall, skillEffectOverall,
+                                movementSpd, magicDefense, mana, physicalAtk, physicalDefense,
+                                hp, attackSpeed, manaRegen));
+                    } catch (NumberFormatException e) {
+                        System.out.println("Skipping invalid line: " + line);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return heroes;
+    }
+
+    private static double parseDouble(String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+}
