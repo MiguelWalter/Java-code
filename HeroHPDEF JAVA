@@ -1,0 +1,206 @@
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
+import java.io.*;
+import java.util.*;
+import javax.swing.table.DefaultTableModel;
+
+public class HeroHPDEF {
+
+    // Inner class for storing Hero information
+    static class Hero {
+        String heroName;
+        String role;  // Changed from gameId to role
+        int defense;
+        int hp;
+
+        Hero(String heroName, String role, int defense, int hp) {
+            this.heroName = heroName;
+            this.role = role;  // Use role instead of gameId
+            this.defense = defense;
+            this.hp = hp;
+        }
+    }
+
+    // GUI components
+    private JFrame frame;
+    private JTextArea resultTextArea;
+    private JButton loadButton;
+    private JButton sortButton;
+    private Map<String, Hero> heroMap = new HashMap<>();
+    private JTable heroTable;
+    private DefaultTableModel tableModel;
+
+    // Constructor: Sets up the GUI
+    public HeroHPDEF() {
+        frame = new JFrame("Game Analytics - Hero Comparison");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 700);
+        frame.setLayout(new BorderLayout());
+
+        // Set background color to a soft blue
+        frame.getContentPane().setBackground(new Color(173, 216, 230));  // Soft blue background
+
+        // Create input fields and buttons
+        loadButton = new JButton("Load Hero Data");
+        loadButton.setBackground(new Color(0, 123, 255)); // Blue
+        loadButton.setForeground(Color.WHITE);
+        loadButton.setFocusPainted(false);
+        loadButton.setFont(new Font("Arial", Font.BOLD, 14));
+        loadButton.setPreferredSize(new Dimension(200, 40)); // Increased button size
+
+        sortButton = new JButton("Sort Heroes by HP");
+        sortButton.setBackground(new Color(0, 123, 255)); // Blue
+        sortButton.setForeground(Color.WHITE);
+        sortButton.setFocusPainted(false);
+        sortButton.setFont(new Font("Arial", Font.BOLD, 14));
+        sortButton.setPreferredSize(new Dimension(200, 40)); // Increased button size
+
+        resultTextArea = new JTextArea();
+        resultTextArea.setEditable(false);
+        resultTextArea.setLineWrap(true);
+        resultTextArea.setWrapStyleWord(true);
+        resultTextArea.setFont(new Font("Arial", Font.PLAIN, 14));
+        resultTextArea.setBackground(new Color(144, 238, 144));  // Light green background for results area
+        resultTextArea.setForeground(new Color(0, 51, 102)); // Dark blue text for contrast
+        JScrollPane resultScrollPane = new JScrollPane(resultTextArea);
+        resultScrollPane.setPreferredSize(new Dimension(250, 150)); // Set preferred size for the result box (smaller width)
+
+        // Table to display Hero Name, Role, Defense, and HP
+        String[] columnNames = {"Hero", "Role", "Defense", "HP"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        heroTable = new JTable(tableModel);
+        heroTable.setBackground(new Color(144, 238, 144)); // Light green background for the table
+        JScrollPane tableScrollPane = new JScrollPane(heroTable);
+        tableScrollPane.setPreferredSize(new Dimension(250, 150)); // Set preferred size for the table (smaller width)
+
+        // Layout setup
+        JPanel topPanel = new JPanel();
+        topPanel.setBackground(new Color(173, 216, 230));  // Soft blue background for the input panel
+        topPanel.add(loadButton);
+        topPanel.add(sortButton);
+
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel.setBackground(new Color(173, 216, 230)); // Soft blue background for center panel
+
+        // Create a panel for the result and table with a border
+        JPanel resultTablePanel = new JPanel();
+        resultTablePanel.setLayout(new BoxLayout(resultTablePanel, BoxLayout.Y_AXIS));
+        resultTablePanel.setBorder(BorderFactory.createTitledBorder("Results and Hero Data"));
+        resultTablePanel.setBackground(new Color(173, 216, 230)); // Soft blue background for the result table panel
+        resultTablePanel.add(resultScrollPane);
+        resultTablePanel.add(Box.createRigidArea(new Dimension(0, 10))); // Space between result and table
+        resultTablePanel.add(tableScrollPane);
+
+        centerPanel.add(Box.createVerticalGlue()); // Add space at the top
+        centerPanel.add(resultTablePanel);
+        centerPanel.add(Box.createVerticalGlue()); // Add space at the bottom
+
+        // Add panels and components to the frame
+        frame.add(topPanel, BorderLayout.NORTH);
+        frame.add(centerPanel, BorderLayout.CENTER); // Add the center panel
+
+        // Action listeners for buttons
+        loadButton.addActionListener(e -> loadHeroData());
+        sortButton.addActionListener(e -> sortHeroesByHP());
+
+        frame.setVisible(true);
+    }
+
+    // Method to read hero data from CSV file
+    public void loadHeroData() {
+        // Show file chooser to select the file
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select Hero Data CSV File");
+        int result = fileChooser.showOpenDialog(frame);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            String filename = file.getAbsolutePath();
+
+            // Read and process the CSV file
+            List<Hero> heroes = readHeroData(filename);
+
+            // Update the table with hero data
+            updateHeroTable(heroes);
+
+            JOptionPane.showMessageDialog(frame, "Hero data loaded successfully from " + filename);
+        } else {
+            JOptionPane.showMessageDialog(frame, "No file selected.");
+        }
+    }
+
+    // Method to read hero data from the CSV file
+    public List<Hero> readHeroData(String filename) {
+        List<Hero> heroes = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String line;
+            br.readLine();  // Skip header line
+
+            while ((line = br.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) continue;
+
+                String[] parts = line.split(",");
+                if (parts.length >= 4) {  // Adjusted to accommodate all columns
+                    String heroName = parts[0].trim();
+                    String role = parts[1].trim();  // Use role instead of gameId
+                    int defense = Integer.parseInt(parts[2].trim());
+                    int hp = Integer.parseInt(parts[3].trim());
+
+                    heroes.add(new Hero(heroName, role, defense, hp));
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Skipping invalid line: " + line);
+                }
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(frame, "Error reading file: " + e.getMessage());
+        }
+
+        return heroes;
+    }
+
+    // Method to update the table with hero data
+    public void updateHeroTable(List<Hero> heroes) {
+        // Clear the existing data
+        tableModel.setRowCount(0);
+
+        // Add rows to the table for each hero
+        for (Hero hero : heroes) {
+            tableModel.addRow(new Object[]{hero.heroName, hero.role, hero.defense, hero.hp});
+        }
+    }
+
+    // Method to sort heroes by HP and show their Defense
+    public void sortHeroesByHP() {
+        // Get the list of all heroes from the table
+        List<Hero> heroes = new ArrayList<>();
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            String heroName = (String) tableModel.getValueAt(i, 0);
+            String role = (String) tableModel.getValueAt(i, 1);  // Get role instead of gameId
+            int defense = (Integer) tableModel.getValueAt(i, 2);
+            int hp = (Integer) tableModel.getValueAt(i, 3);
+
+            heroes.add(new Hero(heroName, role, defense, hp));
+        }
+
+        // Sort heroes by HP in ascending order
+        heroes.sort(Comparator.comparingInt(hero -> hero.hp));
+
+        // Display the sorted result in the text area and the table
+        resultTextArea.setText("Heroes sorted by HP (lowest to highest):\n");
+        for (Hero hero : heroes) {
+            resultTextArea.append(hero.heroName + " - Role: " + hero.role + ", HP: " + hero.hp + ", Defense: " + hero.defense + "\n");
+        }
+
+        // Update the table with the sorted data
+        updateHeroTable(heroes);
+    }
+
+    // Main method to launch the GUI
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(HeroHPDEF::new);
+    }
+}
