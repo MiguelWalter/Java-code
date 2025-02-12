@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero Battle Game</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #6e7dff, #87CEEB);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 450px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        h2 {
+            color: #4C9FD7;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        input[type="file"] {
+            font-size: 1rem;
+            padding: 12px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 2px solid #87CEEB;
+            background-color: #f0f8ff;
+            color: #333;
+        }
+
+        .hero-select {
+            margin-bottom: 25px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid #87CEEB;
+            font-size: 1rem;
+            background-color: #f0f8ff;
+            color: #333;
+        }
+
+        button {
+            background-color: #87CEEB;
+            color: white;
+            font-size: 1.1rem;
+            padding: 12px 20px;
+            border-radius: 8px;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: #6fa8d7;
+        }
+
+        .result-box {
+            background-color: #f0f8ff;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 12px;
+            border: 2px solid #87CEEB;
+            display: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-box h3 {
+            color: #4C9FD7;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .result-box p {
+            font-size: 1.2rem;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .hero-card {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background-color: #f0f8ff;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .hero-card .hero-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #4C9FD7;
+        }
+
+        .hero-card .hero-stats {
+            font-size: 1rem;
+            color: #333;
+        }
+
+        /* Adding subtle animation */
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .container {
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        .result-box {
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        /* Win/Loss messages */
+        .win {
+            color: green;
+            font-weight: bold;
+        }
+
+        .lose {
+            color: red;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Hero Battle Game</h2>
+
+        <!-- File input for CSV -->
+        <input type="file" id="fileInput" accept=".csv">
+        
+        <!-- Hero selection dropdowns -->
+        <div class="hero-select">
+            <label for="hero1Select">Select Hero 1:</label>
+            <select id="hero1Select"></select>
+
+            <label for="hero2Select">Select Hero 2:</label>
+            <select id="hero2Select"></select>
+        </div>
+
+        <!-- Button to start battle -->
+        <button id="startBattleBtn">Start Battle</button>
+
+        <!-- Result box -->
+        <div class="result-box" id="resultBox">
+            <h3>Battle Result:</h3>
+            <div id="resultText"></div>
+        </div>
+    </div>
+
+    <script>
+        class Hero {
+            constructor(name, defenseOverall, offenseOverall, skillEffectOverall,
+                        movementSpd, magicDefense, mana, physicalAtk, attackSpeed, hp) {
+                this.name = name;
+                this.defenseOverall = defenseOverall || 0;  
+                this.offenseOverall = offenseOverall || 0;
+                this.skillEffectOverall = skillEffectOverall || 0;
+                this.movementSpd = movementSpd || 0;
+                this.magicDefense = magicDefense || 0;
+                this.mana = mana || 0;
+                this.physicalAtk = physicalAtk || 0;
+                this.attackSpeed = attackSpeed || 0;
+                this.hp = hp || 0;
+                this.winRate = this.calculateWinRate(); 
+            }
+
+            // Method to calculate win rate based on the mentioned attributes
+            calculateWinRate() {
+                return (this.defenseOverall * 0.15) + 
+                       (this.offenseOverall * 0.15) + 
+                       (this.skillEffectOverall * 0.1) + 
+                       (this.movementSpd * 0.1) + 
+                       (this.magicDefense * 0.1) + 
+                       (this.mana * 0.1) + 
+                       (this.physicalAtk * 0.1) + 
+                       (this.attackSpeed * 0.1) + 
+                       (this.hp * 0.1);
+            }
+
+            // Normalize win rates of two heroes so that they sum up to 100%
+            static normalizeWinRates(hero1, hero2) {
+                let totalWinRate = hero1.winRate + hero2.winRate;
+
+                if (totalWinRate === 0) {
+                    hero1.winRate = 50.0;
+                    hero2.winRate = 50.0;
+                } else {
+                    hero1.winRate = (hero1.winRate / totalWinRate) * 100;
+                    hero2.winRate = (hero2.winRate / totalWinRate) * 100;
+                }
+
+                hero1.winRate = Math.round(hero1.winRate * 100.0) / 100.0;
+                hero2.winRate = Math.round(hero2.winRate * 100.0) / 100.0;
+            }
+        }
+
+        let heroes = [];
+
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            let file = event.target.files[0];
+            if (file) {
+                parseCSV(file);
+            }
+        });
+
+        function parseCSV(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const lines = e.target.result.split('\n');
+                heroes = [];
+
+                for (let line of lines) {
+                    let values = line.split(',');
+
+                    if (values.length > 1 && values[0] !== 'hero_name') {
+                        const hero = new Hero(
+                            values[0],
+                            parseFloat(values[1]),
+                            parseFloat(values[2]),
+                            parseFloat(values[3]),
+                            parseFloat(values[4]),
+                            parseFloat(values[5]),
+                            parseFloat(values[6]),
+                            parseFloat(values[7]),
+                            parseFloat(values[8]),
+                            parseFloat(values[9])
+                        );
+                        heroes.push(hero);
+                    }
+                }
+
+                populateHeroSelectOptions();
+            };
+
+            reader.readAsText(file);
+        }
+
+        function populateHeroSelectOptions() {
+            const hero1Select = document.getElementById('hero1Select');
+            const hero2Select = document.getElementById('hero2Select');
+            hero1Select.innerHTML = '';
+            hero2Select.innerHTML = '';
+
+            heroes.forEach((hero, index) => {
+                let option = document.createElement('option');
+                option.value = index;
+                option.textContent = hero.name;
+                hero1Select.appendChild(option);
+                hero2Select.appendChild(option.cloneNode(true));
+            });
+        }
+
+        document.getElementById('startBattleBtn').addEventListener('click', function() {
+            const hero1Select = document.getElementById('hero1Select');
+            const hero2Select = document.getElementById('hero2Select');
+            const resultText = document.getElementById('resultText');
+            const resultBox = document.getElementById('resultBox');
+
+            const hero1Index = hero1Select.value;
+            const hero2Index = hero2Select.value;
+
+            if (hero1Index === hero2Index) {
+                resultText.textContent = 'Please select two different heroes.';
+                resultBox.style.display = 'block';
+                return;
+            }
+
+            const hero1 = heroes[hero1Index];
+            const hero2 = heroes[hero2Index];
+
+            Hero.normalizeWinRates(hero1, hero2);
+
+            resultText.innerHTML = `
+                <div class="hero-card">
+                    <div class="hero-name">${hero1.name}</div>
+                    <div class="hero-stats">Win Rate: ${hero1.winRate}%</div>
+                </div>
+                <div class="hero-card">
+                    <div class="hero-name">${hero2.name}</div>
+                    <div class="hero-stats">Win Rate: ${hero2.winRate}%</div>
+                </div>
+                <p class="${hero1.winRate > hero2.winRate ? 'win' : 'lose'}">
+                    ${hero1.winRate > hero2.winRate ? hero1.name + ' wins!' : hero2.name + ' wins!'}
+                </p>
+            `;
+            resultBox.style.display = 'block';
+        });
+    </script>
+
+</body>
+</html>
